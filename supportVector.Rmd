@@ -1,0 +1,92 @@
+---
+title: "Support Vector"
+author: "Dr. J"
+date: "7/18/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_knit$set(root.dir = "C:\\Users\\DrJ\\Documents\\classes\\CSUB")
+library(DMwR2)
+library(e1071)
+library(quantmod)
+
+```
+## Get data from finance.yahoo.com:
+
+```{r}
+getwd()
+appleData = read.csv('AAPL.csv')
+head(appleData)
+n = length(appleData[,1])
+appleDataLag1 = data.frame(Open = appleData$Open[1:(n-1)],
+                           High = appleData$High[1:(n-1)],
+                           Low =  appleData$Low[1:(n-1)],
+                           Close = appleData$Close[2:n],
+                           Volume = appleData$Volume[1:(n-1)])
+
+
+```
+
+## plot closing price
+
+```{r}
+
+plot(appleData$Close, type = 'l')
+delta = appleData$Close-appleData$Open
+par(lty=2)
+plot(delta, col='red', type='l')
+plot(appleData$Volume,type='l')
+```
+
+## SV machine
+
+```{r}
+
+modelSVM = svm(Close~Open+High+Low+Volume, data=appleData)
+print(modelSVM)
+summary(modelSVM)
+predictedClose = predict(modelSVM, appleData)
+
+plot(appleData$Close, pch=0)
+points(predictedClose, pch=19, col='red')
+
+```
+
+## model parameters
+
+```{r}
+W = t(modelSVM$coefs) %*% modelSVM$SV
+print(W)
+
+#Find value of b
+b = modelSVM$rho
+print(b)
+
+```
+
+## lagged model
+
+```{r}
+modelSVM1 = svm(Close~Open+High+Low+Volume, data=appleDataLag1[1:260,])
+print(modelSVM1)
+summary(modelSVM1)
+predictedClose1 = predict(modelSVM1, appleDataLag1[261:(n-1),])
+
+plot(seq(261, (n-1)),appleDataLag1$Close[261:(n-1)], pch=0)
+points(seq(261, (n-1)),predictedClose1, pch=19, col='red')
+```
+
+
+## model
+
+```{r}
+W1 = t(modelSVM1$coefs) %*% modelSVM1$SV
+print(W1)
+
+#Find value of b
+b1 = modelSVM1$rho
+print(b1)
+```
+
